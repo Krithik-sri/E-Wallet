@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const userRoute = require("./routes/userRoute");
 
 const app = express()
 
@@ -10,16 +11,20 @@ const app = express()
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false}));
-app.use({
+app.use(
     cors({
-        origin: ["http://localhost:3000", "https://kmart.vercel.app"],
+        origin: ["http://localhost:3000", "https://localhost:6000"],
         credentials: true,
     })
 
-})
+);
 
 
 // Routes
+
+app.use("/api/users", userRoute);
+
+
 app.get("/", (req,res) => {
     res.send("Home Page")
 })
