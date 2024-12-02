@@ -65,6 +65,71 @@ const registerUser = asyncHandler(async (req,res) => {
     res.send("Registering User");
 });
 
+const loginUser = asyncHandler(async(req,res) => {
+    const {email,password} = req.body;
+
+    if(!email || !password){
+        res.status(400);
+        throw new Error("Email or password is empty/invalid")
+    }
+
+
+    const user = await User.findOne({email});
+
+    if (!user) {
+        res.status(400);
+        throw new Error("The user does not exist");
+    }
+
+    const passwordIsCorrect = await bcrypt.compare(password, user.password);
+
+
+    const token = generateToken(user._id);
+    if(user && passwordIsCorrect){
+
+        const loggedinUser = await User.findOne({email}).select("-password");
+        res.cookie("token", token, {
+            path: "/",
+            httpOnly: true,
+            expires: new Date(Date.now() + 1000 * 86400),
+            // secure: true,
+            // sameSite: none,
+
+        })
+        res.status(200).json(loggedinUser);
+
+    }
+    else{
+        res.status(400);
+        throw new Error("Invalid email or password");
+
+    }
+
+})
+
+const logoutUser = asyncHandler(async (req,res) => {
+    res.cookie("token", "", {
+        path: "/",
+        httpOnly: true,
+        expires: new Date(0),
+    });
+    res.status(200).json({message: "User is logged out"})
+});
+
+const getUser = asyncHandler(async (req,res) => {
+    const user = await User.findById(req.user_id).select("-password");
+    if (user) {
+        res.status(200).json(user);
+    } else {
+        res.status(400);
+        throw new Error("User not found");
+    }
+})
+
+
 module.exports = {
     registerUser,
+    loginUser,
+    logoutUser,
+    getUser,
 };
